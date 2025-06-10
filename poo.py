@@ -161,6 +161,12 @@ class Aplicacion:
         canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.canvas = canvas # Guardar referencia al canvas para usarla en el método de animación
 
+        # --- AGREGAR IMAGEN DE FONDO ---
+        self.fondo_presentacion_img = cargar_imagen("fondoPrincipal.png", (self.ancho_pantalla, self.alto_pantalla))
+        if self.fondo_presentacion_img:
+            canvas.create_image(0, 0, image=self.fondo_presentacion_img, anchor="nw")
+        # --- FIN IMAGEN DE FONDO ---
+
         # Helper para convertir coordenadas relativas a absolutas para el canvas
         def rel_x(val): return int(val * self.ancho_pantalla)
         def rel_y(val): return int(val * self.alto_pantalla)
@@ -196,7 +202,7 @@ class Aplicacion:
         btn_iniciar = tk.Button(self.root, text="INICIAR CUESTIONARIO",
                                 font=("Arial", 22, "bold"), bg=COLOR_ACCENT, fg="white",
                                 activebackground=COLOR_ACCENT_HOVER, activeforeground="white",
-                                # --- CAMBIO AQUÍ: Llamamos al sonido ANTES de mostrar la primera pregunta ---
+                                # ---  Llamamos al sonido ANTES de mostrar la primera pregunta ---
                                 command=lambda: (reproducir_sonido("startup_sound.mp3"), self.mostrar_pregunta()),
                                 relief="raised", bd=3)
         btn_iniciar.place(relx=0.5, rely=0.85, anchor="center", width=400, height=80)
@@ -206,7 +212,7 @@ class Aplicacion:
         btn_iniciar.bind("<Leave>", self.on_leave_iniciar_btn)
 
         # === Footer ===
-        footer_text = "Proyecto desarrollado por [Tu Nombre 1], [Tu Nombre 2] y [Nasif Carina]"
+        footer_text = "Proyecto desarrollado por [Fortín Raquel], [ Andres] y [Nasif Carina]"
         footer_label = tk.Label(self.root,
                                 text=footer_text,
                                 font=("Arial", 12),
@@ -295,9 +301,7 @@ class Aplicacion:
     def mostrar_pregunta(self):
         """
         Muestra la siguiente pregunta del quiz.
-        El sonido startup_sound.mp3 YA NO se reproduce aquí.
         """
-
         if self.index >= len(preguntas):
             self.mostrar_resultado()
             return
@@ -309,18 +313,24 @@ class Aplicacion:
                                    highlightthickness=0, bg=COLOR_FONDO_MEDIO)
         canvas_pregunta.place(relx=0, rely=0, relwidth=1, relheight=1)
 
+        # --- AGREGAR IMAGEN DE FONDO ---
+        self.fondo_pregunta_img = cargar_imagen("Interfaz_page-0002.jpg", (self.ancho_pantalla, self.alto_pantalla))
+        if self.fondo_pregunta_img:
+            canvas_pregunta.create_image(0, 0, image=self.fondo_pregunta_img, anchor="nw")
+
         def rel_x_q(val): return int(val * self.ancho_pantalla)
         def rel_y_q(val): return int(val * self.alto_pantalla)
 
         pregunta_actual, opciones_actuales, _ = preguntas[self.index]
 
         canvas_pregunta.create_rectangle(rel_x_q(0.1), rel_y_q(0.1), rel_x_q(0.9), rel_y_q(0.25),
-                                         fill="#E3F2FD", outline="#90CAF9", width=2, tags="pregunta_box")
+                                         fill="", outline="#90CAF9", width=2, tags="pregunta_box")
         canvas_pregunta.create_text(rel_x_q(0.5), rel_y_q(0.175), text=f"{self.index + 1}. {pregunta_actual}",
                                     font=("Arial", 22, "bold"), fill=COLOR_TEXTO_OSCURO,
                                     width=rel_x_q(0.75), anchor="center")
 
-        y_posiciones_opciones = [0.4, 0.55, 0.7]
+        # Aumentar la separación vertical entre las opciones
+        y_posiciones_opciones = [0.4, 0.58, 0.76]  # Antes: [0.4, 0.55, 0.7]
 
         for i, pos in enumerate(y_posiciones_opciones):
             boton = tk.Button(self.root, text=opciones_actuales[i],
@@ -328,7 +338,7 @@ class Aplicacion:
                               bg="#BBDEFB", activebackground="#90CAF9", fg=COLOR_TEXTO_OSCURO, relief="flat",
                               command=lambda idx=i: self.verificar(idx),
                               wraplength=int(self.ancho_pantalla * 0.6))
-            boton.place(relx=0.5, rely=pos, anchor="center", width=int(self.ancho_pantalla * 0.7), height=80)
+            boton.place(relx=0.3, rely=pos, anchor="w", width=int(self.ancho_pantalla * 0.6), height=80)
 
     def verificar(self, seleccion):
         """Verifica la respuesta seleccionada por el usuario."""
@@ -337,11 +347,11 @@ class Aplicacion:
             self.puntaje += 1
             # Aquí podrías agregar un sonido para respuesta correcta, por ejemplo:
             # reproducir_sonido("correct_answer.mp3")
-            messagebox.showinfo("✅ Respuesta Correcta", "¡Tu respuesta es correcta!")
+            messagebox.showinfo(" Respuesta Correcta", "¡Tu respuesta es correcta!")
         else:
             # Aquí podrías agregar un sonido para respuesta incorrecta, por ejemplo:
             # reproducir_sonido("incorrect_answer.mp3")
-            messagebox.showerror("❌ Respuesta Incorrecta", f"Incorrecto. La respuesta correcta era: {preguntas[self.index][1][correcta]}")
+            messagebox.showerror(" Respuesta Incorrecta", f"Incorrecto. La respuesta correcta era: {preguntas[self.index][1][correcta]}")
 
         self.index += 1
         self.root.after(500, self.mostrar_pregunta)
@@ -399,4 +409,3 @@ if __name__ == "__main__":
         pygame.mixer.quit()
     except Exception as e:
         print(f"Error al cerrar pygame.mixer: {e}")
-    # --- FIN LIMPIEZA ---
