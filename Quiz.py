@@ -114,15 +114,13 @@ class Aplicacion:
         self.root.update_idletasks() # Forzar actualización para obtener dimensiones correctas
         self.ancho_pantalla = self.root.winfo_width()
         self.alto_pantalla = self.root.winfo_height()
-
         self.puntaje = 0
         self.index = 0
 
-        # --- Variables añadidas para el Efecto Máquina de Escribir ---
+        # --- Variables para el Efecto Máquina de Escribir ---
         self.texto_quiz_completo = "¿Cuánto sabes de Python?"
         self.texto_quiz_actual_index = 0
         self.titulo_python_id = None # Para almacenar el ID del texto en el canvas
-        # --- Fin de variables para Efecto Máquina de Escribir ---
 
         # --- Variables para las animaciones de "Evalúa" y "TUS SABERES" ---
         self.evalua_id = None
@@ -130,7 +128,6 @@ class Aplicacion:
         # Necesitamos guardar las posiciones X iniciales para 'coords()'
         self.evalua_initial_x = 0
         self.saberes_initial_x = 0
-
         self.animacion_step = 0
         self.animacion_duracion = 20 # Número de frames para la animación
         self.font_size_evalua_inicio = 1 # Tamaño de fuente inicial (invisible)
@@ -139,8 +136,13 @@ class Aplicacion:
         self.font_size_saberes_final = 60
         self.pos_y_evalua_final = 0.1
         self.pos_y_saberes_final = 0.18
-        # --- Fin variables animación textos ---
-
+        # Variables para animación de resultados (agregar en __init__)
+        self.resultado_animacion_step = 0
+        self.resultado_animacion_duracion = 20
+        self.resultados_id = None  # Para el texto "TUS RESULTADOS"
+        self.felicitaciones_id = None
+        self.puntaje_id = None
+        
         self.mostrar_presentacion()
 
     def limpiar(self):
@@ -182,8 +184,6 @@ class Aplicacion:
         self.saberes_id = canvas.create_text(self.saberes_initial_x, rel_y(0.08), text="TUS SABERES", # Empieza más arriba
                                             font=("Impact", self.font_size_saberes_inicio),
                                             fill=COLOR_TEXTO_OSCURO, anchor="nw", angle=10)
-
-
         # === Logo y Texto de Informatorio ===
         self.logo_photo = cargar_imagen("logo.jpg", (500, 350))
         if self.logo_photo:
@@ -194,7 +194,7 @@ class Aplicacion:
         if self.group_photo:
             canvas.create_image(rel_x(0.8), rel_y(0.45), image=self.group_photo, anchor="center")
 
-        # === EL TEXTO "¿CUÁNTO SABES DE PYTHON?" ===
+        # === TEXTO "¿CUÁNTO SABES DE PYTHON?" ===
         self.titulo_python_id = canvas.create_text(rel_x(0.48), rel_y(0.3), text="", # Inicialmente vacío
                                                    font=("Helvetica", 28, "bold"), fill=COLOR_TEXTO_OSCURO, anchor="center")
 
@@ -212,7 +212,7 @@ class Aplicacion:
         btn_iniciar.bind("<Leave>", self.on_leave_iniciar_btn)
 
         # === Footer ===
-        footer_text = "Proyecto desarrollado por [Fortín Raquel], [ Andres] y [Nasif Carina]"
+        footer_text = "Proyecto desarrollado por [Fortín Raquel], [ Encina Andres ] y [Nasif Carina]"
         footer_label = tk.Label(self.root,
                                 text=footer_text,
                                 font=("Arial", 12),
@@ -238,17 +238,21 @@ class Aplicacion:
     # --- Métodos para el Efecto Máquina de Escribir ---
     def escribir_titulo_python(self):
         """Implementa el efecto de máquina de escribir para el título del quiz."""
-        if self.texto_quiz_actual_index < len(self.texto_quiz_completo):
-            texto_a_mostrar = self.texto_quiz_completo[:self.texto_quiz_actual_index + 1]
-            self.canvas.itemconfig(self.titulo_python_id, text=texto_a_mostrar)
-            # Reproducir sonido de clic de máquina de escribir
-            reproducir_sonido("typewriter_click.mp3") 
-            self.texto_quiz_actual_index += 1
-            self.root.after(80, self.escribir_titulo_python) # Velocidad del tecleo
-        else:
+        try:
+            if self.texto_quiz_actual_index < len(self.texto_quiz_completo):
+                texto_a_mostrar = self.texto_quiz_completo[:self.texto_quiz_actual_index + 1]
+                if self.canvas and self.titulo_python_id:
+                    self.canvas.itemconfig(self.titulo_python_id, text=texto_a_mostrar)
+                reproducir_sonido("typewriter_click.mp3")
+                self.texto_quiz_actual_index += 1
+                self.root.after(80, self.escribir_titulo_python)
+            else:
+                pass
+        except tk.TclError:
+            
             pass
 
-    # --- Nuevos métodos para animar "Evalúa" y "TUS SABERES" ---
+    # ---  métodos para animar "Evalúa" y "TUS SABERES" ---
     def animar_evalua_saberes(self):
         if self.animacion_step <= self.animacion_duracion:
             current_font_size_evalua = self.font_size_evalua_inicio + (
@@ -323,14 +327,14 @@ class Aplicacion:
 
         pregunta_actual, opciones_actuales, _ = preguntas[self.index]
 
-        canvas_pregunta.create_rectangle(rel_x_q(0.1), rel_y_q(0.1), rel_x_q(0.9), rel_y_q(0.25),
-                                         fill="", outline="#90CAF9", width=2, tags="pregunta_box")
+        canvas_pregunta.create_rectangle(rel_x_q(0.2), rel_y_q(0.1), rel_x_q(0.9), rel_y_q(0.25),
+                                         fill="#B366FF", outline="#90CAF9", width=2, tags="pregunta_box")
         canvas_pregunta.create_text(rel_x_q(0.5), rel_y_q(0.175), text=f"{self.index + 1}. {pregunta_actual}",
                                     font=("Arial", 22, "bold"), fill=COLOR_TEXTO_OSCURO,
                                     width=rel_x_q(0.75), anchor="center")
 
         # Aumentar la separación vertical entre las opciones
-        y_posiciones_opciones = [0.4, 0.58, 0.76]  # Antes: [0.4, 0.55, 0.7]
+        y_posiciones_opciones = [0.4, 0.58, 0.76]  
 
         for i, pos in enumerate(y_posiciones_opciones):
             boton = tk.Button(self.root, text=opciones_actuales[i],
@@ -340,10 +344,13 @@ class Aplicacion:
                               wraplength=int(self.ancho_pantalla * 0.6))
             boton.place(relx=0.3, rely=pos, anchor="w", width=int(self.ancho_pantalla * 0.6), height=80)
 
-    def verificar(self, seleccion):
+    def verificar(self, idx):
         """Verifica la respuesta seleccionada por el usuario."""
+        if self.index >= len(preguntas):
+            return
+
         _, _, correcta = preguntas[self.index]
-        if seleccion == correcta:
+        if idx == correcta:
             self.puntaje += 1
             # Aquí podrías agregar un sonido para respuesta correcta, por ejemplo:
             # reproducir_sonido("correct_answer.mp3")
@@ -355,48 +362,82 @@ class Aplicacion:
 
         self.index += 1
         self.root.after(500, self.mostrar_pregunta)
-
-    def mostrar_resultado(self):
-        """Muestra la pantalla final con el puntaje del quiz."""
-        self.limpiar()
-        puntaje_porcentaje = int((self.puntaje / len(preguntas)) * 100)
-
-        mensaje_principal = "¡Felicitaciones!" if puntaje_porcentaje >= 70 else "Sigue intentándolo..."
-        mensaje_secundario = f"Obtuviste {self.puntaje} de {len(preguntas)} respuestas correctas.\nTu puntaje final es: {puntaje_porcentaje}%"
-
-        # Fondo para la pantalla de resultados 
-        self.root.configure(bg=COLOR_FONDO_OSCURO)
-
-        # Crear un frame para el resultado para centrarlo y darle un fondo claro
-        frame_resultado = tk.Frame(self.root, bg="#E0F2F7", bd=5, relief="raised")
-        frame_resultado.place(relx=0.5, rely=0.5, anchor="center",
-                              width=self.ancho_pantalla * 0.6, height=self.alto_pantalla * 0.5)
-
-        label_principal = tk.Label(frame_resultado, text=mensaje_principal,
-                                   font=("Arial", 36, "bold"), fg="#004D40", bg="#E0F2F7")
-        label_principal.pack(pady=20)
-
-        label_secundario = tk.Label(frame_resultado, text=mensaje_secundario,
-                                    font=("Arial", 20), fg="#263238", bg="#E0F2F7")
-        label_secundario.pack(pady=10)
-
-        # Botones para reiniciar y salir
-        btn_reiniciar = tk.Button(frame_resultado, text="Reiniciar Quiz",
-                                  font=("Arial", 18, "bold"), bg=COLOR_EXITO, fg="white",
-                                  command=self.reiniciar_quiz, relief="flat", bd=3)
-        btn_reiniciar.pack(pady=20)
-
-        btn_salir = tk.Button(frame_resultado, text="Salir",
-                              font=("Arial", 18, "bold"), bg=COLOR_ERROR, fg="white",
-                              command=self.root.destroy, relief="flat", bd=3)
-        btn_salir.pack(pady=10)
-
     def reiniciar_quiz(self):
-        """Reinicia el quiz a su estado inicial."""
         self.puntaje = 0
         self.index = 0
         self.mostrar_presentacion()
+    
+    def mostrar_resultado(self):
+        """Muestra la pantalla final con la imagen y mensaje de resultado en la ventana principal"""
+        self.limpiar()
+        puntaje_porcentaje = int((self.puntaje / len(preguntas)) * 100)
 
+        # Configuración de fondo simple (sin imagen)
+        self.root.configure(bg=COLOR_FONDO_MEDIO)
+
+        # Crear canvas para resultados
+        canvas_resultado = tk.Canvas(self.root, width=self.ancho_pantalla, height=self.alto_pantalla,
+                                   highlightthickness=0, bg=COLOR_FONDO_MEDIO)
+        canvas_resultado.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.canvas = canvas_resultado
+
+        # Imagen y mensaje según el puntaje
+        if puntaje_porcentaje > 70:
+            img_path = "felicidades.jpg"
+            mensaje = "¡Felicidades, excelente resultado!"
+            # Audio
+            try:
+                import pygame
+                pygame.mixer.init()
+                pygame.mixer.music.load("sonidos/aplausos.mp3")
+                pygame.mixer.music.play()
+            except Exception as e:
+                print(f"No se pudo reproducir el audio: {e}")
+            # Mostrar imagen como fondo de todo el canvas ANTES del confeti
+            resultado_img = cargar_imagen(img_path, (self.ancho_pantalla, self.alto_pantalla))
+            if resultado_img:
+                canvas_resultado.create_image(0, 0, image=resultado_img, anchor="nw")
+                self.resultado_img = resultado_img
+            # Confeti
+            import random
+            colores = ["#FF5733", "#33FF57", "#3357FF", "#F7DC6F", "#AF7AC5", "#48C9B0", "#F1948A"]
+            confetis = []
+            for _ in range(40):
+                x = random.randint(10, self.ancho_pantalla-10)
+                y = random.randint(-200, 0)
+                size = random.randint(8, 18)
+                color = random.choice(colores)
+                confeti = canvas_resultado.create_oval(x, y, x+size, y+size, fill=color, outline="")
+                confetis.append((confeti, random.randint(2, 6)))
+            def animar_confeti():
+                for confeti, speed in confetis:
+                    canvas_resultado.move(confeti, 0, speed)
+                    x1, y1, x2, y2 = canvas_resultado.coords(confeti)
+                    if y1 > self.alto_pantalla:
+                        canvas_resultado.move(confeti, 0, -self.alto_pantalla-20)
+                self.root.after(30, animar_confeti)
+            animar_confeti()
+        else:
+            img_path = "Interfaz_p-7 seguir intentando.jpg"
+            mensaje = "¡Sigue practicando, puedes mejorar!"
+            # Mostrar imagen como fondo de todo el canvas
+            resultado_img = cargar_imagen(img_path, (self.ancho_pantalla, self.alto_pantalla))
+            if resultado_img:
+                canvas_resultado.create_image(0, 0, image=resultado_img, anchor="nw")
+                self.resultado_img = resultado_img
+
+        # Mensaje
+        canvas_resultado.create_text(self.ancho_pantalla//2, 420, text=mensaje, font=("Arial", 22, "bold"), fill="#333")
+        # Puntaje
+        puntaje_text = f"{puntaje_porcentaje}% Acertaste {self.puntaje} de {len(preguntas)} respuestas correctas"
+        canvas_resultado.create_text(self.ancho_pantalla//2, 450, text=puntaje_text, font=("Arial", 18), fill="#222")
+
+        # Botón para reiniciar o volver al inicio
+        btn_reiniciar = tk.Button(self.root, text="Reiniciar Quiz", font=("Arial", 14, "bold"), bg=COLOR_EXITO, fg="white", command=self.reiniciar_quiz, relief="flat", bd=3)
+        btn_reiniciar.place(relx=0.4, rely=0.9, anchor="center", width=200, height=50)
+        btn_salir = tk.Button(self.root, text="Salir", font=("Arial", 14, "bold"), bg=COLOR_ERROR, fg="white", command=self.root.destroy, relief="flat", bd=3)
+        btn_salir.place(relx=0.6, rely=0.9, anchor="center", width=200, height=50)
+    
 # === Ejecutar aplicación ===
 if __name__ == "__main__":
     root = tk.Tk()
